@@ -70,7 +70,7 @@ def load_sales_transactions(filename: str = "transactions.csv") -> List[Dict[str
     return load_csv("sales", filename)
 
 
-def load_customers(file_path, bst):
+def load_customers(file_path, bst, avl):
     try:
         with open(file_path, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -91,14 +91,21 @@ def load_customers(file_path, bst):
         end_bst = time.perf_counter()
         total_bst_duration = end_bst - start_bst
 
+        # --------- AVL insertion ---------
+        start_avl = time.perf_counter()
+        for customer in customers:
+            avl.insert(customer)
+        end_avl = time.perf_counter()
+        total_avl_duration = end_avl - start_avl
 
         print(f"Total BST load duration: {total_bst_duration:.6f} seconds")
-        log_operation(f"Loaded {len(customers)} customers: BST {total_bst_duration:.6f}s")
+        print(f"Total AVL load duration: {total_avl_duration:.6f} seconds")
+        log_operation(f"Loaded {len(customers)} customers: BST {total_bst_duration:.6f}s, AVL {total_avl_duration:.6f}s")
     except FileNotFoundError:
         log_operation(f"Customer file {file_path} not found. Starting with empty data.")
 
 
-def save_customers(file_path, bst):
+def save_customers(file_path, bst, avl):
     # --------- Save BST customers ---------
     def save_bst():
         customers = bst.inorder_traversal()
@@ -117,7 +124,26 @@ def save_customers(file_path, bst):
 
     _, bst_time = timed_operation(save_bst)
 
+    # --------- Save AVL customers ---------
+    def save_avl():
+        customers = avl.inorder_traversal()
+        with open(file_path, 'w', newline='') as csvfile:
+            fieldnames = ['customer_id', 'name', 'loyalty_points', 'tier', 'join_date']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for c in customers:
+                writer.writerow({
+                    'customer_id': c.customer_id,
+                    'name': c.name,
+                    'loyalty_points': c.loyalty_points,
+                    'tier': c.tier,
+                    'join_date': c.join_date
+                })
+
+    _, avl_time = timed_operation(save_avl)
+
     print(f"BST save duration: {bst_time:.6f} seconds")
+    print(f"AVL save duration: {avl_time:.6f} seconds")
 
 
 def extract_data_from_common_dataset(input_file: Optional[str] = None) -> Dict[str, int]:
