@@ -13,6 +13,7 @@ class BSTNode:
 class BSTTree(TreeInterface[T]):
     def __init__(self):
         self.root = None
+        self.customers = []
 
     def insert(self, customer):
         inserted = False
@@ -20,6 +21,7 @@ class BSTTree(TreeInterface[T]):
             nonlocal inserted
             if not node:
                 inserted = True
+                self.customers.append(customer)
                 log_operation(f"Inserted: {customer}")
                 return BSTNode(customer)
             if customer.customer_id < node.customer.customer_id:
@@ -84,3 +86,25 @@ class BSTTree(TreeInterface[T]):
             return node
         self.root = _delete(self.root, customer_id)
 
+    def update_points(self, customer_id, earned_points):
+        updated = False
+        customer = self.search(customer_id)
+        if not customer:
+            return updated
+
+        old_points = customer.loyalty_points
+        customer.loyalty_points += earned_points
+
+        # Tier upgrade logic
+        old_tier = customer.tier
+        if customer.loyalty_points > 1000:
+            customer.tier = "Platinum"
+        elif customer.loyalty_points > 500:
+            customer.tier = "Gold"
+        elif customer.loyalty_points > 300:
+            customer.tier = "Silver"
+        else:
+            customer.tier = "Bronze"
+
+        log_operation(f"BST Updated Points: {customer_id}, {old_points} -> {customer.loyalty_points}, Tier: {old_tier} -> {customer.tier}")
+        return True

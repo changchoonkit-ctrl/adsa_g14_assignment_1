@@ -1,7 +1,7 @@
 from datetime import datetime
 
 class Customer:
-    def __init__(self, customer_id, name, loyalty_points=0, tier="Bronze", join_date=None):
+    def __init__(self, customer_id, name, loyalty_points=0, tier="Basic", join_date=None):
         self.customer_id = customer_id
         self.name = name
         self.loyalty_points = loyalty_points

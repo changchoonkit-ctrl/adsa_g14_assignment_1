@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 class AVLNode:
     def __init__(self, customer):
-        self.customer = customer
+        self.avl_customer = customer
         self.left = None
         self.right = None
         self.height = 1
@@ -15,6 +15,7 @@ class AVLNode:
 class AVLTree(TreeInterface[T]):
     def __init__(self):
         self.root = None
+        self.customers = []
 
     def insert(self, customer):
         inserted = False
@@ -22,49 +23,44 @@ class AVLTree(TreeInterface[T]):
             nonlocal inserted
             if not node:
                 inserted = True
+                self.customers.append(customer)
                 log_operation(f"Inserted: {customer}")
                 return AVLNode(customer)
-
-            if customer.customer_id < node.customer.customer_id:
+            if customer.customer_id < node.avl_customer.customer_id:
                 node.left = _insert(node.left, customer)
-            elif customer.customer_id > node.customer.customer_id:
+            elif customer.customer_id > node.avl_customer.customer_id:
                 node.right = _insert(node.right, customer)
             else:
                 log_operation(f"Customer {customer.customer_id} already exists.")
                 return node
-
-            # Update height
+            # Height and rotation logic...
             node.height = 1 + max(self.get_height(node.left), self.get_height(node.right))
-
-            # Balance factor
             balance = self.get_balance(node)
-
-            # Left heavy
-            if balance > 1 and customer.customer_id < node.left.customer.customer_id:
+            # Rotations...
+            if balance > 1 and customer.customer_id < node.left.avl_customer.customer_id:
                 return self.right_rotate(node)
-            if balance < -1 and customer.customer_id > node.right.customer.customer_id:
+            if balance < -1 and customer.customer_id > node.right.avl_customer.customer_id:
                 return self.left_rotate(node)
-            if balance > 1 and customer.customer_id > node.left.customer.customer_id:
+            if balance > 1 and customer.customer_id > node.left.avl_customer.customer_id:
                 node.left = self.left_rotate(node.left)
                 return self.right_rotate(node)
-            if balance < -1 and customer.customer_id < node.right.customer.customer_id:
+            if balance < -1 and customer.customer_id < node.right.avl_customer.customer_id:
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
             return node
-
         self.root = _insert(self.root, customer)
         return inserted
 
     def search(self, customer_id):
         node = self.root
         while node:
-            if customer_id < node.customer.customer_id:
+            if customer_id < node.avl_customer.customer_id:
                 node = node.left
-            elif customer_id > node.customer.customer_id:
+            elif customer_id > node.avl_customer.customer_id:
                 node = node.right
             else:
-                log_operation(f"Found customer: {node.customer}")
-                return node.customer
+                log_operation(f"Found customer: {node.avl_customer}")
+                return node.avl_customer
         log_operation(f"Customer {customer_id} not found")
         return None
 
@@ -99,7 +95,7 @@ class AVLTree(TreeInterface[T]):
             node = self.root
         if node.left:
             self.inorder_traversal(node.left, result)
-        result.append(node.customer)
+        result.append(node.avl_customer)
         if node.right:
             self.inorder_traversal(node.right, result)
         return result
@@ -112,12 +108,12 @@ class AVLTree(TreeInterface[T]):
         def _delete(node, customer_id):
             if not node:
                 return None
-            if customer_id < node.customer.customer_id:
+            if customer_id < node.avl_customer.customer_id:
                 node.left = _delete(node.left, customer_id)
-            elif customer_id > node.customer.customer_id:
+            elif customer_id > node.avl_customer.customer_id:
                 node.right = _delete(node.right, customer_id)
             else:
-                log_operation(f"Deleted: {node.customer}")
+                log_operation(f"Deleted: {node.avl_customer}")
                 if not node.left:
                     return node.right
                 if not node.right:
@@ -125,7 +121,7 @@ class AVLTree(TreeInterface[T]):
                 succ = node.right
                 while succ.left:
                     succ = succ.left
-                node.customer = succ.customer
+                node.avl_customer = succ.customer
                 node.right = _delete(node.right, succ.customer.customer_id)
 
             # Update height and balance
@@ -143,3 +139,26 @@ class AVLTree(TreeInterface[T]):
                 return self.left_rotate(node)
             return node
         self.root = _delete(self.root, customer_id)
+
+    def update_points(self, customer_id, earned_points):
+        updated = False
+        customer = self.search(customer_id)
+        if not customer:
+            return updated
+
+        old_points = customer.loyalty_points
+        customer.loyalty_points += earned_points
+
+        # Tier upgrade logic
+        old_tier = customer.tier
+        if customer.loyalty_points > 1000:
+            customer.tier = "Platinum"
+        elif customer.loyalty_points > 500:
+            customer.tier = "Gold"
+        elif customer.loyalty_points > 300:
+            customer.tier = "Silver"
+        else:
+            customer.tier = "Bronze"
+
+        log_operation(f"AVL Updated Points: {customer_id}, {old_points} -> {customer.loyalty_points}, Tier: {old_tier} -> {customer.tier}")
+        return True

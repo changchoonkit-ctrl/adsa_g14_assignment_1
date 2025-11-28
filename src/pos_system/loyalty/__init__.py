@@ -4,25 +4,6 @@ from src.pos_system.common.logger import log_operation
 
 __all__ = ["BinaryTree", "AVLTree"]
 
-def update_points(tree, customer_id, earned_points):
-    updated = False
-    customer = tree.search(customer_id)
-    if not customer:
-        return updated
-    old_points = customer.loyalty_points
-    customer.loyalty_points += earned_points
-
-    # Tier upgrade logic
-    old_tier = customer.tier
-    if customer.loyalty_points >= 1000:
-        customer.tier = "Gold"
-    elif customer.loyalty_points >= 500:
-        customer.tier = "Silver"
-    else:
-        customer.tier = "Bronze"
-
-    log_operation(f"Updated Points: {customer_id}, {old_points} -> {customer.loyalty_points}, Tier: {old_tier} -> {customer.tier}")
-    return True
 
 def calculate_discount(customer):
     if customer.tier == "Gold":

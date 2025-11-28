@@ -5,7 +5,7 @@ from src.pos_system.loyalty.avl_tree import AVLTree
 from src.pos_system.loyalty.binary_tree import BSTTree
 from src.pos_system.common.data_loader import load_customers, save_customers
 from src.pos_system.common.logger import log_operation, timed_operation
-from src.pos_system.loyalty import update_points, calculate_discount, top_n_customers, range_query
+from src.pos_system.loyalty import calculate_discount, top_n_customers, range_query
 import os
 
 
@@ -43,9 +43,10 @@ def loyalty_demo():
         if choice == "1":
             cid = input("Customer ID: ")
             name = input("Name: ")
-            customer = Customer(cid, name)
-            bst_result, bst_time = timed_operation(bst.insert, customer)
-            avl_result, avl_time = timed_operation(avl.insert, customer)
+            bst_customer = Customer(cid, name)
+            avl_customer = Customer(cid, name)
+            bst_result, bst_time = timed_operation(bst.insert, bst_customer)
+            avl_result, avl_time = timed_operation(avl.insert, avl_customer)
             if bst_result or avl_result:
                 print(f"Customer {cid} inserted.")
                 print(f"BST insert duration: {bst_time:.6f} seconds")
@@ -56,8 +57,8 @@ def loyalty_demo():
         elif choice == "2":
             cid = input("Customer ID: ")
             points = int(input("Points Earned: "))
-            bst_result, bst_time = timed_operation(update_points, bst, cid, points)
-            avl_result, avl_time = timed_operation(update_points, avl, cid, points)
+            bst_result, bst_time = timed_operation(bst.update_points, cid, points)
+            avl_result, avl_time = timed_operation(avl.update_points, cid, points)
             if bst_result or avl_result:
                 print(f"Customer {cid} inserted.")
                 print(f"BST search and update duration: {bst_time:.6f} seconds")
