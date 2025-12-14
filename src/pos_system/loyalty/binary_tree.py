@@ -1,7 +1,6 @@
 """Binary tree skeleton for loyalty module."""
 from typing import Optional, TypeVar
 from src.pos_system.common.interfaces import Node, TreeInterface
-from src.pos_system.common.logger import log_operation
 T = TypeVar("T")
 
 class BSTNode:
@@ -14,23 +13,23 @@ class BSTTree(TreeInterface[T]):
     def __init__(self):
         self.root = None
 
-    def insert(self, customer):
-        inserted = False
+    def insert(self, customer, action_from = ""):
+        if(action_from == "Register"):
+            if self.search(customer.customer_id) is not None:
+                return False
+
+        # Customer does not exist, perform insertion
         def _insert(node, customer):
-            nonlocal inserted
             if not node:
-                inserted = True
-                log_operation(f"Inserted: {customer}")
                 return BSTNode(customer)
             if customer.customer_id < node.customer.customer_id:
                 node.left = _insert(node.left, customer)
-            elif customer.customer_id > node.customer.customer_id:
-                node.right = _insert(node.right, customer)
             else:
-                log_operation(f"Customer {customer.customer_id} already exists.")
+                node.right = _insert(node.right, customer)
             return node
+
         self.root = _insert(self.root, customer)
-        return inserted
+        return True
 
     def search(self, customer_id):
         node = self.root
@@ -40,9 +39,7 @@ class BSTTree(TreeInterface[T]):
             elif customer_id > node.customer.customer_id:
                 node = node.right
             else:
-                log_operation(f"Found customer: {node.customer}")
                 return node.customer
-        log_operation(f"Customer {customer_id} not found")
         return None
     
     def inorder_traversal(self, node=None, result=None):
@@ -70,7 +67,6 @@ class BSTTree(TreeInterface[T]):
             elif customer_id > node.customer.customer_id:
                 node.right = _delete(node.right, customer_id)
             else:
-                log_operation(f"Deleted: {node.customer}")
                 if not node.left:
                     return node.right
                 if not node.right:

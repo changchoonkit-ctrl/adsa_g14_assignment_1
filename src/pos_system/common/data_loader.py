@@ -7,8 +7,9 @@ import csv
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Set
 from src.pos_system.common.Customer import Customer
-from src.pos_system.common.logger import log_operation, timed_operation
+from src.pos_system.common.logger import timed_operation
 import time
+import random
 
 def get_data_path(module_name: str, filename: str) -> Path:
     """Get the full path to a data file.
@@ -69,82 +70,59 @@ def load_sales_transactions(filename: str = "transactions.csv") -> List[Dict[str
     """
     return load_csv("sales", filename)
 
-
 def load_customers(file_path, bst, avl):
-    try:
-        with open(file_path, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            customers = [
-                Customer(
-                    customer_id=row['customer_id'],
-                    name=row['name'],
-                    loyalty_points=int(row['loyalty_points']),
-                    tier=row['tier'],
-                    join_date=row['join_date']
-                ) for row in reader
-            ]
+    with open(file_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        customers = [
+            Customer(
+                customer_id=row['customer_id'],
+                name=row['name'],
+                loyalty_points=int(row['loyalty_points']),
+                tier=row['tier'],
+                join_date=row['join_date']
+            ) for row in reader
+        ]
 
-        # --------- BST insertion ---------
-        start_bst = time.perf_counter()
-        for customer in customers:
-            bst.insert(customer)
-        end_bst = time.perf_counter()
-        total_bst_duration = end_bst - start_bst
+    # Ask user for insertion order
+    print("Select insertion order:")
+    print("1: Sequential order (sorted by customer_id)")
+    print("2: Random-order")
+    print("Other: Random-order")
 
-        # --------- AVL insertion ---------
-        start_avl = time.perf_counter()
-        for customer in customers:
-            avl.insert(customer)
-        end_avl = time.perf_counter()
-        total_avl_duration = end_avl - start_avl
+    order_choice = input("Enter your choice: ").strip()
 
-        print(f"Total BST load duration: {total_bst_duration:.6f} seconds")
-        print(f"Total AVL load duration: {total_avl_duration:.6f} seconds")
-        log_operation(f"Loaded {len(customers)} customers: BST {total_bst_duration:.6f}s, AVL {total_avl_duration:.6f}s")
-    except FileNotFoundError:
-        log_operation(f"Customer file {file_path} not found. Starting with empty data.")
+    # Arrange customers according to the choice
+    if order_choice == "1":
+        # Sequential order
+        customers.sort(key=lambda c: c.customer_id)
+    elif order_choice == "2":
+        # Random-order
+        random.shuffle(customers)
+    else:
+        # Random-order    
+        random.shuffle(customers)
 
+    # Input Customer numbers (max 10000)
+    num_to_insert = int(input("Enter the number of customers to insert: "))
 
-def save_customers(file_path, bst, avl):
-    # --------- Save BST customers ---------
-    def save_bst():
-        customers = bst.inorder_traversal()
-        with open(file_path, 'w', newline='') as csvfile:
-            fieldnames = ['customer_id', 'name', 'loyalty_points', 'tier', 'join_date']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for c in customers:
-                writer.writerow({
-                    'customer_id': c.customer_id,
-                    'name': c.name,
-                    'loyalty_points': c.loyalty_points,
-                    'tier': c.tier,
-                    'join_date': c.join_date
-                })
+    num_to_insert = min(num_to_insert, len(customers))
 
-    _, bst_time = timed_operation(save_bst)
+    # --------- BST insertion ---------
+    start_bst = time.perf_counter()
+    for i in range(num_to_insert):
+        bst.insert(customers[i])
+    end_bst = time.perf_counter()
+    total_bst_duration = end_bst - start_bst
 
-    # --------- Save AVL customers ---------
-    def save_avl():
-        customers = avl.inorder_traversal()
-        with open(file_path, 'w', newline='') as csvfile:
-            fieldnames = ['customer_id', 'name', 'loyalty_points', 'tier', 'join_date']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for c in customers:
-                writer.writerow({
-                    'customer_id': c.customer_id,
-                    'name': c.name,
-                    'loyalty_points': c.loyalty_points,
-                    'tier': c.tier,
-                    'join_date': c.join_date
-                })
+    # --------- AVL insertion ---------
+    start_avl = time.perf_counter()
+    for i in range(num_to_insert):
+        avl.insert(customers[i])
+    end_avl = time.perf_counter()
+    total_avl_duration = end_avl - start_avl
 
-    _, avl_time = timed_operation(save_avl)
-
-    print(f"BST save duration: {bst_time:.6f} seconds")
-    print(f"AVL save duration: {avl_time:.6f} seconds")
-
+    print(f"Total BST load duration: {total_bst_duration:.6f} seconds")
+    print(f"Total AVL load duration: {total_avl_duration:.6f} seconds")
 
 def extract_data_from_common_dataset(input_file: Optional[str] = None) -> Dict[str, int]:
     """Extract inventory, sales, and loyalty data from the large common dataset.

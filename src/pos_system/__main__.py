@@ -3,13 +3,13 @@ import time
 from src.pos_system.common.Customer import Customer
 from src.pos_system.loyalty.avl_tree import AVLTree
 from src.pos_system.loyalty.binary_tree import BSTTree
-from src.pos_system.common.data_loader import load_customers, save_customers
-from src.pos_system.common.logger import log_operation, timed_operation
+from src.pos_system.common.data_loader import load_customers
+from src.pos_system.common.logger import timed_operation
 from src.pos_system.loyalty import update_points, calculate_discount, top_n_customers, range_query
 from src.pos_system.inventory.inventory_module import InventoryModule
 from src.pos_system.sales.bst import main as SalesModule
 import os
-
+import sys
 
 def inventory_demo():
     """Inventory management demo by Tan Seng Hooi"""
@@ -27,7 +27,7 @@ def loyalty_demo():
     """Loyalty transactios demo by Chang Choon Kit"""
     bst = BSTTree()
     avl = AVLTree()
-
+    sys.setrecursionlimit(100000)
     # Load customers at start
     customer_file = os.path.join("data", "loyalty", "customers.csv")
     load_customers(customer_file, bst, avl)
@@ -47,14 +47,16 @@ def loyalty_demo():
             cid = input("Customer ID: ")
             name = input("Name: ")
             customer = Customer(cid, name)
-            bst_result, bst_time = timed_operation(bst.insert, customer)
-            avl_result, avl_time = timed_operation(avl.insert, customer)
+            bst_result, bst_time = timed_operation(bst.insert, customer, "Register")
+            avl_result, avl_time = timed_operation(avl.insert, customer, "Register")
             if bst_result or avl_result:
                 print(f"Customer {cid} inserted.")
-                print(f"BST insert duration: {bst_time:.6f} seconds")
-                print(f"AVL insert duration: {avl_time:.6f} seconds")
+                print(f"BST search and insert duration: {bst_time:.6f} seconds")
+                print(f"AVL search and insert duration: {avl_time:.6f} seconds")
             else:
                 print(f"Customer {cid} already exists. No insert performed.")
+                print(f"BST search duration: {bst_time:.6f} seconds")
+                print(f"AVL search duration: {avl_time:.6f} seconds")
 
         elif choice == "2":
             cid = input("Customer ID: ")
@@ -62,7 +64,7 @@ def loyalty_demo():
             bst_result, bst_time = timed_operation(update_points, bst, cid, points)
             avl_result, avl_time = timed_operation(update_points, avl, cid, points)
             if bst_result or avl_result:
-                print(f"Customer {cid} inserted.")
+                print(f"Points for Customer {cid} updated.")
                 print(f"BST search and update duration: {bst_time:.6f} seconds")
                 print(f"AVL search and update duration: {avl_time:.6f} seconds")
             else:
@@ -75,7 +77,6 @@ def loyalty_demo():
             print(f"Customer {cid} removed.")
             print(f"BST delete duration: {bst_time:.6f} seconds")
             print(f"AVL delete duration: {avl_time:.6f} seconds")
-            log_operation(f"Customer {cid} removed from both trees.")
 
         elif choice == "4":
             bst_customers, bst_time = timed_operation(bst.inorder_traversal)
@@ -119,8 +120,6 @@ def loyalty_demo():
             print(f"BST range query duration: {bst_time:.6f} seconds")
             print(f"AVL range query duration: {avl_time:.6f} seconds")
         elif choice == "7":
-            # Save before exit
-            save_customers(customer_file, bst, avl)
             print("Exiting system.")
             break
 

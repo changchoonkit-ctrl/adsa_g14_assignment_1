@@ -3,7 +3,7 @@ from src.pos_system.inventory.splay_tree import SplayTree, SplayNode
 from src.pos_system.inventory.inventory_data_loader import build_inventory_bst, build_inventory_splay_tree, InventoryKeyType
 from src.pos_system.common.Product import Product
 from src.pos_system.common.data_loader import load_inventory_products
-from src.pos_system.common.logger import log_operation, timed_operation
+from src.pos_system.common.logger import  timed_operation
 import time
 import random
 import string
